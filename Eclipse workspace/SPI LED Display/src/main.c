@@ -314,6 +314,34 @@ void myGPIOB_Init(){
 
 }
 
+void myTIM2_Init()
+{
+	/* Enable clock for TIM2 peripheral */
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+	/* Configure TIM2: buffer auto-reload, count up, stop on overflow,
+	 * enable update events, interrupt on overflow only */
+	TIM2->CR1 = ((uint16_t)0x008C);
+
+
+	/* Update timer registers */
+	TIM2->EGR = ((uint16_t)0x0001);
+
+	/* Assign TIM2 interrupt priority = 0 in NVIC */
+	NVIC_SetPriority(TIM2_IRQn, 0);
+	// Same as: NVIC->IP[3] = ((uint32_t)0x00FFFFFF);
+
+	/* Enable TIM2 interrupts in NVIC */
+	NVIC_EnableIRQ(TIM2_IRQn);
+	// Same as: NVIC->ISER[0] = ((uint32_t)0x00008000) */
+
+	/* Enable update interrupt generation */
+	TIM2->DIER |= TIM_DIER_UIE;
+	/* Start counting timer pulses */
+	TIM2->CR1 |= TIM_CR1_CEN;
+}
+
+
 void oled_Write( unsigned char Value )
 {
 
@@ -397,6 +425,36 @@ void mySPI_config(){
 
 
 
+}
+
+/*/*Author:Benjamin Amadi
+ Purpose:Timer2 interrupt 
+ I/O: N/A
+ Registers manipulated:TIM2
+ */
+void TIM2_IRQHandler()
+{
+	uint16_t LEDstate;
+
+	/* Check if update interrupt flag is indeed set */
+	if ((TIM2->SR & TIM_SR_UIF) != 0)
+	{
+		/* Read current PC output and isolate PC8 and PC9 bits */
+		LEDstate = GPIOC->ODR & ((uint16_t)0x0300);
+		if (LEDstate == 0)	/* If LED is off, turn it on... */
+		{
+			/* Set PC8 or PC9 bit */
+			GPIOC->BSRR = blinkingLED;
+		}
+		else			/* ...else (LED is on), turn it off */
+		{
+			/* Reset PC8 or PC9 bit */
+			GPIOC->BRR = blinkingLED;
+		}
+
+		TIM2->SR &= ~(TIM_SR_UIF);	/* Clear update interrupt flag */
+		TIM2->CR1 |= TIM_CR1_CEN;	/* Restart stopped timer */
+	}
 }
 
 #pragma GCC diagnostic pop
