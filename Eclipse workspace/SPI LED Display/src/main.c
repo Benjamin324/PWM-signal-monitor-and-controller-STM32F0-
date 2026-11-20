@@ -1,53 +1,49 @@
-/*
- * This file is part of the µOS++ distribution.
- *   (https://github.com/micro-os-plus)
- * Copyright (c) 2014 Liviu Ionescu.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom
- * the Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- */
+//
+// This file is part of the GNU ARM Eclipse distribution.
+// Copyright (c) 2014 Liviu Ionescu.
+//
 
 // ----------------------------------------------------------------------------
 
 #include <stdio.h>
-#include <stdlib.h>
-#include "diag/trace.h"
-#include "cmsis/cmsis_device.h" //Library to manipulate the MCU
+#include "diag/Trace.h"
+#include <string.h>
 
-
-// See "system/include/cmsis/stm32f051x8.h" for register/bit definitions.
-// See "system/src/cmsis/vectors_stm32f051x8.c" for handler declarations.
-
-
+#include "cmsis/cmsis_device.h"
 
 // ----------------------------------------------------------------------------
 //
-// STM32F0 empty sample (trace via DEBUG).
+// STM32F0 led blink sample (trace via $(trace)).
+//
+// In debug configurations, demonstrate how to print a greeting message
+// on the trace device. In release configurations the message is
+// simply discarded.
+//
+// To demonstrate POSIX retargetting, reroute the STDOUT and STDERR to the
+// trace device and display messages on both of them.
+//
+// Then demonstrates how to blink a led with 1Hz, using a
+// continuous loop and SysTick delays.
+//
+// On DEBUG, the uptime in seconds is also displayed on the trace device.
 //
 // Trace support is enabled by adding the TRACE macro definition.
-// By default the trace messages are forwarded to the DEBUG output,
+// By default the trace messages are forwarded to the $(trace) output,
 // but can be rerouted to any device or completely suppressed, by
-// changing the definitions required in system/src/diag/trace-impl.c
+// changing the definitions required in system/src/diag/trace_impl.c
 // (currently OS_USE_TRACE_ITM, OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
 //
+// The external clock frequency is specified as a preprocessor definition
+// passed to the compiler via a command line option (see the 'C/C++ General' ->
+// 'Paths and Symbols' -> the 'Symbols' tab, if you want to change it).
+// The value selected during project creation was HSE_VALUE=48000000.
+//
+/// Note: The default clock settings take the user defined HSE_VALUE and try
+// to reach the maximum possible system clock. For the default 8MHz input
+// the result is guaranteed, but for other values it might not be possible,
+// so please adjust the PLL settings in system/src/cmsis/system_stm32f0xx.c
+//
+
 
 // ----- main() ---------------------------------------------------------------
 
@@ -58,19 +54,27 @@
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
+
+/*** This is partial code for accessing LED Display via SPI interface. ***/
+
+
+
+
 unsigned int Freq = 0;  // Example: measured frequency value (global variable)
 unsigned int Res = 0;   // Example: measured resistance value (global variable)
+
 
 void oled_Write(unsigned char);
 void oled_Write_Cmd(unsigned char);
 void oled_Write_Data(unsigned char);
 
+void oled_config(void);
 
 void refresh_OLED(void);
 
-void mySPI_config(void);//PB13 and 15 AF enable function
-void myGPIOB_Init(void);//GPIOB init
+
 SPI_HandleTypeDef SPI_Handle;
+
 
 //
 // LED Display initialization commands
@@ -237,6 +241,7 @@ unsigned char Characters[][8] = {
 };
 
 
+
 void SystemClock48MHz( void )
 {
 //
@@ -248,21 +253,25 @@ void SystemClock48MHz( void )
 //
     while (( RCC->CR & RCC_CR_PLLRDY ) != 0 );
 //
-// Configure the PLL for 48-MHz system clock
+// Configure the PLL for a 48MHz system clock
 //
     RCC->CFGR = 0x00280000;
+
 //
 // Enable the PLL
 //
     RCC->CR |= RCC_CR_PLLON;
+
 //
 // Wait for the PLL to lock
 //
     while (( RCC->CR & RCC_CR_PLLRDY ) != RCC_CR_PLLRDY );
+
 //
 // Switch the processor to the PLL clock source
 //
     RCC->CFGR = ( RCC->CFGR & (~RCC_CFGR_SW_Msk)) | RCC_CFGR_SW_PLL;
+
 //
 // Update the system with the new clock frequency
 //
@@ -271,110 +280,136 @@ void SystemClock48MHz( void )
 }
 
 
+
 int
 main(int argc, char* argv[])
 {
+
 	SystemClock48MHz();
-  // At this stage the system clock should have already been configured
-  // at high speed.
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;  /* Enable SYSCFG clock */
-	myGPIOB_Init();
-	mySPI_config();
 
+	oled_config();
+oled_Write_Data(0x0000000000);
+	while (1)
+	{
+                 //IDK BRO ,Clear the display i guess
+               // Res =+1;
+		refresh_OLED();
 
-
-
-  // Infinite loop
-  while (1)
-    {
-
-
-    }
-}
-
-/*Author:Benjamin Amadi
- Purpose:GPIOB Initialization
- I/O: GPIOB->
- Registers manipulated:RCC
- */
-void myGPIOB_Init(){
-	/*Enable clock for GPIOB pins*/
-	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-	/*Configure PB13,15 as AF and 8,9,11 as Output*/
-	/*Enable AF0*/
-	GPIOB->AFR[1] = (0x0 << GPIO_AFRH_AFSEL13_Pos| 0x0 <<GPIO_AFRH_AFSEL15_Pos);
-	GPIOB->MODER = (0x88450000);
-	/* Ensure push-pull mode selected for PB */
-	GPIOB->OTYPER &= ~(GPIO_OTYPER_OT_13 | GPIO_OTYPER_OT_15 | GPIO_OTYPER_OT_8 | GPIO_OTYPER_OT_9 | GPIO_OTYPER_OT_11 );
-
-	/* Ensure high-speed mode for PB */
-	GPIOB->OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR8 | GPIO_OSPEEDER_OSPEEDR9| GPIO_OSPEEDER_OSPEEDR11 |GPIO_OSPEEDER_OSPEEDR13 | GPIO_OSPEEDER_OSPEEDR15);
-	/* Ensure no pull-up/pull-down for PB */
-	GPIOB->PUPDR &= ~(GPIO_PUPDR_PUPDR9 | GPIO_PUPDR_PUPDR11 | GPIO_PUPDR_PUPDR8 | GPIO_PUPDR_PUPDR13 | GPIO_PUPDR_PUPDR15);
+	}
 
 }
 
-void myTIM2_Init()
+
+
+//
+// LED Display Functions
+//
+
+
+void refresh_OLED( void )
 {
-	/* Enable clock for TIM2 peripheral */
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    // Buffer size = at most 16 characters per PAGE + terminating '\0'
+    unsigned char Buffer[17];
 
-	/* Configure TIM2: buffer auto-reload, count up, stop on overflow,
-	 * enable update events, interrupt on overflow only */
-	TIM2->CR1 = ((uint16_t)0x008C);
+    snprintf( Buffer, sizeof( Buffer ), "R: %5u Ohms", Res );
+    /* Buffer now contains your character ASCII codes for LED Display
+       - select PAGE (LED Display line) and set starting SEG (column)
+       - for each c = ASCII code = Buffer[0], Buffer[1], ...,
+           send 8 bytes in Characters[c][0-7] to LED Display
+    */
+    oled_Write_Cmd(0xB2) ;// select PAGE: 0010
+oled_Write_Cmd(0x03); // set SEG: lower half ----0011
+ oled_Write_Cmd(0x10); // set SEG: upper half 0000----
+
+oled_Write_Data(Characters[54]);
 
 
-	/* Update timer registers */
-	TIM2->EGR = ((uint16_t)0x0001);
 
-	/* Assign TIM2 interrupt priority = 0 in NVIC */
-	NVIC_SetPriority(TIM2_IRQn, 0);
-	// Same as: NVIC->IP[3] = ((uint32_t)0x00FFFFFF);
 
-	/* Enable TIM2 interrupts in NVIC */
-	NVIC_EnableIRQ(TIM2_IRQn);
-	// Same as: NVIC->ISER[0] = ((uint32_t)0x00008000) */
+    snprintf( Buffer, sizeof( Buffer ), "F: %5u Hz", Freq );
+    /* Buffer now contains your character ASCII codes for LED Display
+       - select PAGE (LED Display line) and set starting SEG (column)
+       - for each c = ASCII code = Buffer[0], Buffer[1], ...,
+           send 8 bytes in Characters[c][0-7] to LED Display
+    */
+   oled_Write_Cmd(0xB2) ;// select PAGE: 0010
+oled_Write_Cmd(0x03); // set SEG: lower half ----0011
+ oled_Write_Cmd(0x10); // set SEG: upper half 0000---
+oled_Write_Data(Characters[32]);
 
-	/* Enable update interrupt generation */
-	TIM2->DIER |= TIM_DIER_UIE;
-	/* Start counting timer pulses */
-	TIM2->CR1 |= TIM_CR1_CEN;
+
+	/* Wait for ~100 ms (for example) to get ~10 frames/sec refresh rate
+       - You should use TIM3 to implement this delay (e.g., via polling)
+    */
+
+
+
+}
+
+
+void oled_Write_Cmd( unsigned char cmd )
+{
+     // make PB8 = CS# = 1
+    GPIOB->IDR = 0x1<< GPIO_IDR_8;
+     // make PB9 = D/C# = 0
+    GPIOB->IDR = 0x0<< GPIO_IDR_9;
+    // make PB8 = CS# = 0
+    GPIOB->IDR = 0x0<< GPIO_IDR_8;
+    oled_Write( cmd );
+    // make PB8 = CS# = 1
+    GPIOB->IDR = 0x1<< GPIO_IDR_8;
+
+}
+
+void oled_Write_Data( unsigned char data )
+{
+    // make PB8 = CS# = 1
+    GPIOB->IDR = 0x1<< GPIO_IDR_8;
+    // make PB9 = D/C# = 1
+    GPIOB->IDR = 0x1<< GPIO_IDR_9;
+    // make PB8 = CS# = 0
+    GPIOB->BSRR = 0x0<< GPIO_BSRR_BR_8;
+    oled_Write( data );
+    // make PB8 = CS# = 1
+    GPIOB->IDR = 0x1<< GPIO_IDR_8;
 }
 
 
 void oled_Write( unsigned char Value )
 {
+    while(!(SPI2->SR & SPI_SR_TXE)){
 
-    while(SPI2->SR & (SPI_SR_TXE?1:0) );
-    {}
-
-
+    }
+    /* Wait until SPI2 is ready for writing (TXE = 1 in SPI2_SR) */
 
 
     /* Send one 8-bit character:
        - This function also sets BIDIOE = 1 in SPI2_CR1
     */
-  //  while()HAL_SPI_Transmit( &SPI_Handle, &Value, 1, HAL_MAX_DELAY );
+    HAL_SPI_Transmit( &SPI_Handle, &Value, 1, HAL_MAX_DELAY);
 
 
+    /* Wait until transmission is complete (TXE = 1 in SPI2_SR) */
 
-
+    while(!(SPI2->SR & SPI_SR_TXE)){
 
     }
 
-/*Author:Benjamin Amadi
- Purpose:SPI2 output
- I/O: SPI2->
- Registers manipulated:RCC,GPIOB
- */
-
-void mySPI_config(){
-	//trace_printf("hi"); // Add your code here.
-	/*Enable clock for SPI2 peripheral*/
-	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+}
 
 
-	/*Configure SPI2 CR as shown in lecture*/
+void oled_config( void )
+{
+
+// Don't forget to enable GPIOB clock in RCC
+RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+// Don't forget to configure PB13/PB15 as AF0
+GPIOB->MODER = (0x88450000);
+GPIOB->AFR[1] = (0x0 << GPIO_AFRH_AFSEL13_Pos| 0x0 <<GPIO_AFRH_AFSEL15_Pos);
+
+// Don't forget to enable SPI2 clock in RCC
+RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+
     SPI_Handle.Instance = SPI2;
 
     SPI_Handle.Init.Direction = SPI_DIRECTION_1LINE;
@@ -396,23 +431,23 @@ void mySPI_config(){
 // Enable the SPI
 //
     __HAL_SPI_ENABLE( &SPI_Handle );
-    //trace_printf("hi"); //testing point
-
-    // Reset LED Display (RES# = PB11):
-      // - make pin PB11 = 0, wait for a few ms
-       GPIOB->ODR |= 0<< GPIO_ODR_11;
-       //sleep(2);
-      // - make pin PB11 = 1, wait for a few ms
-       GPIOB->ODR |= 1<< GPIO_ODR_11;
 
 
+    /* Reset LED Display (RES# = PB11):
+       - make pin PB11 = 0, wait for a few ms
+       - make pin PB11 = 1, wait for a few ms
+    */
+   GPIOB->BSRR = GPIO_BSRR_BR_11;  // make PB11 = 0
+    //Timer for 10ms with TIM3
+    GPIOB->IDR = 0x1<< GPIO_IDR_11;  // make PB11 = 1
+    //Timer for 10ms
 
 //
 // Send initialization commands to LED Display
 //
     for ( unsigned int i = 0; i < sizeof( oled_init_cmds ); i++ )
     {
-     //   oled_Write_Cmd( oled_init_cmds[i] );
+        oled_Write_Cmd( oled_init_cmds[i] );
     }
 
 
@@ -422,40 +457,16 @@ void mySPI_config(){
            call oled_Write_Data( 0x00 ) 128 times
     */
 
-
+    for(int PAGE = 0; PAGE < 8; PAGE++){
+        for(int SEG = 0; SEG < 128; SEG++){
+            oled_Write_Data(0x00);
+        }
+    }
 
 
 }
 
-/*/*Author:Benjamin Amadi
- Purpose:Timer2 interrupt 
- I/O: N/A
- Registers manipulated:TIM2
- */
-void TIM2_IRQHandler()
-{
-	uint16_t LEDstate;
 
-	/* Check if update interrupt flag is indeed set */
-	if ((TIM2->SR & TIM_SR_UIF) != 0)
-	{
-		/* Read current PC output and isolate PC8 and PC9 bits */
-		LEDstate = GPIOC->ODR & ((uint16_t)0x0300);
-		if (LEDstate == 0)	/* If LED is off, turn it on... */
-		{
-			/* Set PC8 or PC9 bit */
-			GPIOC->BSRR = blinkingLED;
-		}
-		else			/* ...else (LED is on), turn it off */
-		{
-			/* Reset PC8 or PC9 bit */
-			GPIOC->BRR = blinkingLED;
-		}
-
-		TIM2->SR &= ~(TIM_SR_UIF);	/* Clear update interrupt flag */
-		TIM2->CR1 |= TIM_CR1_CEN;	/* Restart stopped timer */
-	}
-}
 
 #pragma GCC diagnostic pop
 
