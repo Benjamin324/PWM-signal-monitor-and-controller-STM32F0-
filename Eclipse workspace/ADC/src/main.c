@@ -52,11 +52,13 @@
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
+int pot_res = 0; // determine the maximum potentiometer resistance value
+
 void ADC_Init() {
 	//enable clock for GPIOA peripheral
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	//configure PA1 as analog input
-	GPIOA->MODER &= 0x0000000C;
+	GPIOA->MODER |= 0xC;
 
 	RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
 
@@ -76,6 +78,10 @@ uint16_t ADC_Read() {
 	return (uint16_t)ADC1->DR;
 }
 
+void DAC_Write(uint16_t ADC_value) {
+	
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -87,14 +93,17 @@ main(int argc, char* argv[])
   while (1)
     {
       //read adc potentiometer voltage through polling
-	  uint16_t polling = ADC_Read();
+	  uint16_t ADC_value = ADC_Read();
 
-	  //calculate digital value from ADC read
-	  uint16_t voltage = polling / 4095 * 3.3;
-	  fprintf("ADC Voltage: %u\n", voltage);
+	  //calculate digital value of pot voltage from ADC read
+	  float voltage = (float)ADC_value / 4095f * 3.3;
+
+	  //calculate digital value of pot resistance from ADC read
+	  float resistance = (float)ADC_value / 4095f * pot_res;
+	  fprintf("ADC Voltage: %f\nADC Resistance: %f\n", voltage, resistance); // for testing
 
 	  //write DAC value to PA4 output
-
+	  DAC_Write(ADC_value);
     }
 }
 
