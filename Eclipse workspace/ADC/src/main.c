@@ -52,7 +52,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
-int pot_res = 0; // determine the maximum potentiometer resistance value
+#define pot_max_res 0.0f // determine the maximum potentiometer resistance value
 
 void ADC_Init() {
 	//enable clock for GPIOA peripheral
@@ -69,6 +69,15 @@ void ADC_Init() {
 	while( !(ADC1->ISR &= ADC_ISR_ADRDY) );
 }
 
+void DAC_Init() {
+	//configure PA4 as analog output
+	GPIOA->MODER |= 0x300;
+	//enable DAC peripheral clock
+	RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+	//enable DAC
+	DAC->CR = DAC_CR_EN1;
+}
+
 uint16_t ADC_Read() {
 	//start polling
 	ADC1->CR |= ADC_CR_ADSTART;
@@ -79,7 +88,7 @@ uint16_t ADC_Read() {
 }
 
 void DAC_Write(uint16_t ADC_value) {
-	
+	DAC->DHR12R1 = ADC_value;
 }
 
 int
@@ -88,22 +97,26 @@ main(int argc, char* argv[])
   // At this stage the system clock should have already been configured
   // at high speed.
 
+	float pot_voltage, pot_resistance;
+	uint16_t ADC_value;
+
 	ADC_Init();
+	DAC_Init();
 
   while (1)
     {
       //read adc potentiometer voltage through polling
-	  uint16_t ADC_value = ADC_Read();
+	  ADC_value = ADC_Read();
 
 	  //calculate digital value of pot voltage from ADC read
-	  float voltage = (float)ADC_value / 4095f * 3.3;
+	  pot_voltage = ((float)ADC_value / 4095f) * 3.3;
 
 	  //calculate digital value of pot resistance from ADC read
-	  float resistance = (float)ADC_value / 4095f * pot_res;
-	  fprintf("ADC Voltage: %f\nADC Resistance: %f\n", voltage, resistance); // for testing
+	  pot_resistance = ((float)ADC_value / 4095f) * pot_max_res;
+	  fprintf("ADC Voltage: %f\nADC Resistance: %f\n", pot_voltage, pot_resistance); // for testing
 
 	  //write DAC value to PA4 output
-	  DAC_Write(ADC_value);
+	  //DAC_Write(ADC_value);
     }
 }
 
