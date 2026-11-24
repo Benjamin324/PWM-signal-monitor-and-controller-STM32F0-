@@ -247,34 +247,43 @@ void SystemClock48MHz( void )
 //
 // Disable the PLL
 //
+
     RCC->CR &= ~(RCC_CR_PLLON);
+
 //
 // Wait for the PLL to unlock
 //
+
     while (( RCC->CR & RCC_CR_PLLRDY ) != 0 );
+
 //
 // Configure the PLL for a 48MHz system clock
 //
+
     RCC->CFGR = 0x00280000;
 
 //
 // Enable the PLL
 //
+
     RCC->CR |= RCC_CR_PLLON;
 
 //
 // Wait for the PLL to lock
 //
+
     while (( RCC->CR & RCC_CR_PLLRDY ) != RCC_CR_PLLRDY );
 
 //
 // Switch the processor to the PLL clock source
 //
+
     RCC->CFGR = ( RCC->CFGR & (~RCC_CFGR_SW_Msk)) | RCC_CFGR_SW_PLL;
 
 //
 // Update the system with the new clock frequency
 //
+
     SystemCoreClockUpdate();
 
 }
@@ -403,6 +412,7 @@ void oled_config( void )
 
 // Don't forget to enable GPIOB clock in RCC
 RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+
 // Don't forget to configure PB13/PB15 as AF0
 GPIOB->MODER = (0x88450000);
 GPIOB->AFR[1] = (0x0 << GPIO_AFRH_AFSEL13_Pos| 0x0 <<GPIO_AFRH_AFSEL15_Pos);
