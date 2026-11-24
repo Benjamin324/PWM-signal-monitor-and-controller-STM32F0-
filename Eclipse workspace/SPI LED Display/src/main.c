@@ -410,14 +410,14 @@ void oled_Write( unsigned char Value )
 void oled_config( void )
 {
 
-// Don't forget to enable GPIOB clock in RCC
+
 RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 
-// Don't forget to configure PB13/PB15 as AF0
+
 GPIOB->MODER = (0x88450000);
 GPIOB->AFR[1] = (0x0 << GPIO_AFRH_AFSEL13_Pos| 0x0 <<GPIO_AFRH_AFSEL15_Pos);
 
-// Don't forget to enable SPI2 clock in RCC
+
 RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 
     SPI_Handle.Instance = SPI2;
