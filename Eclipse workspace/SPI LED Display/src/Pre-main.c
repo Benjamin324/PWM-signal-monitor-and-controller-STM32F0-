@@ -229,16 +229,16 @@ unsigned char oled_init_cmds[] =
 unsigned int Freq = 0; //Measured frequency value
 unsigned int Res = 0; //Measured resistance value
 
-//Init functions declaration
+//Peripheral Init declaration
 void gpio_Init( void );
 void spi_Init( void );
-void led_config(void);
-
+//Led Setup declaration
+void led_Startup_Config(void);
+void oled_Write(unsigned char);
+void oled_Write_Cmd(unsigned char);
+void oled_Write_Data(unsigned char);
 
 //Application(SPI Display) functions declaration
-void oled_Write(unsigned char);
-void oled_Write_Cmd(unsigned char)
-void oled_Write_Data(unsigned char)
 void refresh_OLED( void );
 
 
@@ -247,7 +247,7 @@ main(int argc, char* argv[])
 {
 	gpio_Init();
 	spi_Init();
-	led_config();
+	led_Startup_Config();
 	refresh_OLED();
 
 }
@@ -255,28 +255,35 @@ main(int argc, char* argv[])
 
 //Author: Benjamin Amadi
 //Purpose: Initialize GPIOB 8,9,11,13,15 for SPI MOSI
-//Registers/ Peripherals accessed
+//Registers/ Peripherals accessed: RCC->AHBENR, GPIOB->MODER, GPIOB->AFRH
 
 void gpio_Init(void){
 	//Enable clock. RCC->A...
+	RCC->AHBENR |= CC_AHBENR_GPIOBEN;
 	//Set port pin mode. GPIO->MODER
-	//Set AF0. AFH[1]->
+	GPIOB->MODER |= (GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0 | GPIO_MODER_MODER11_0 | 0x2UL << GPIO_MODER_MODER13_Pos | 0x2UL << GPIO_MODER_MODER15_Pos );
+	//Set AF0 for PB13 and 15. AFH[1]->
+	GPIOB->AFR[1] = 0x00000000;
 
 
 }
 //Author: Benjamin Amadi
 //Purpose: Initialize the SPI connection through HAL
-//Registers/Peripherals accessed: RCC->APB1ENR, SPI2
+//Registers/Peripherals accessed: RCC->APB1ENR,SPI2
 void spi_Init( void ){
 	//Enable clock. RCC->APB1ENR
+	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 	//Call SPI typedef code
+
 	//Initialize SPI interface
 	//Enable the SPI
+
+
 }
 //Author: Benjamin Amadi
-//Purpose: Startup procedure for SSD1306 OLED
-//Registers/Peripherals accessed: PB->11, SPI2
-void led_config(void){
+//Purpose: Manufacterer recommended startup procedure for SSD1306 OLED
+//Registers/Peripherals accessed: GPIOB11, SPI2
+void led_Startup_Config(void){
 	//Drive PB11 low. GPIOB->BSSR = 1
 	//Run a 40k for loop iteration or implement a 10ms timer
 	//Drive PB11 high GPIOB->IDR11 = 1
@@ -290,28 +297,9 @@ void led_config(void){
 
 
 }
-
-void oled_Write_Cmd( unsigned char cmd )
-{
-    /* // make PB8 = CS# = 1
-    ... // make PB9 = D/C# = 0
-    ... // make PB8 = CS# = 0
-    oled_Write( cmd );
-    ... // make PB8 = CS# = 1
-    */
-}
-
-void oled_Write_Data( unsigned char data )
-{
-   /* ... // make PB8 = CS# = 1
-    ... // make PB9 = D/C# = 1
-    ... // make PB8 = CS# = 0
-    oled_Write( data );
-    ... // make PB8 = CS# = 1
-    */
-}
-
-
+//Author: Benjamin Amadi
+//Purpose: Write to Oled
+//Registers/Peripherals accessed: SPI2
 void oled_Write( unsigned char Value )
 {
 
@@ -329,7 +317,39 @@ void oled_Write( unsigned char Value )
 
 
 }
+//Author: Benjamin Amadi
+//Purpose: Send a COMMAND BITS
+//Registers/Peripherals accessed: SPI2,GPIOB
+void oled_Write_Cmd( unsigned char cmd )
+{
+    /* // make PB8 = CS# = 1
+    ... // make PB9 = D/C# = 0
+    ... // make PB8 = CS# = 0
+    oled_Write( cmd );
+    ... // make PB8 = CS# = 1
+    */
 
+
+}
+//Author: Benjamin Amadi
+//Purpose: Send a DATA BITS
+//Registers/Peripherals accessed: SPI2,GPIOB
+void oled_Write_Data( unsigned char data )
+{
+   /* ... // make PB8 = CS# = 1
+    ... // make PB9 = D/C# = 1
+    ... // make PB8 = CS# = 0
+    oled_Write( data );
+    ... // make PB8 = CS# = 1
+    */
+
+
+}
+
+//Author:	 Benjamin Amadi
+//Purpose: pretty obvious
+//Registers/Peripherals accessed: GPIOB, SPI2.
+//Future: use tim3 for delay instead of 40k iteration for loop
 void refresh_OLED( void )
 {
 
