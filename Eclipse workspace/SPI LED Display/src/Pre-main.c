@@ -259,7 +259,7 @@ main(int argc, char* argv[])
 
 void gpio_Init(void){
 	//Enable clock. RCC->A...
-	RCC->AHBENR |= CC_AHBENR_GPIOBEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 	//Set port pin mode. GPIO->MODER
 	GPIOB->MODER |= (GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0 | GPIO_MODER_MODER11_0 | 0x2UL << GPIO_MODER_MODER13_Pos | 0x2UL << GPIO_MODER_MODER15_Pos );
 	//Set AF0 for PB13 and 15. AFH[1]->

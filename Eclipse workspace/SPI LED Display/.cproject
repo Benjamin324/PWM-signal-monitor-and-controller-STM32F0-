@@ -200,8 +200,11 @@
 							<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.961045205" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.572401255.1404846325" name="main2.c" rcbsApplicability="disable" resourcePath="src/main2.c" toolsToInvoke="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.847349461.764534610">
+						<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.847349461.764534610" name="GNU Arm Cross C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.847349461"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="main2.c|Pre-main.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry excluding="src/stm32f0-hal/stm32f0xx_ll_utils.c|src/stm32f0-hal/stm32f0xx_ll_usb.c|src/stm32f0-hal/stm32f0xx_ll_usart.c|src/stm32f0-hal/stm32f0xx_ll_tim.c|src/stm32f0-hal/stm32f0xx_ll_spi.c|src/stm32f0-hal/stm32f0xx_ll_rtc.c|src/stm32f0-hal/stm32f0xx_ll_rcc.c|src/stm32f0-hal/stm32f0xx_ll_pwr.c|src/stm32f0-hal/stm32f0xx_ll_i2c.c|src/stm32f0-hal/stm32f0xx_ll_gpio.c|src/stm32f0-hal/stm32f0xx_ll_exti.c|src/stm32f0-hal/stm32f0xx_ll_dma.c|src/stm32f0-hal/stm32f0xx_ll_dac.c|src/stm32f0-hal/stm32f0xx_ll_crs.c|src/stm32f0-hal/stm32f0xx_ll_crc.c|src/stm32f0-hal/stm32f0xx_ll_comp.c|src/stm32f0-hal/stm32f0xx_ll_adc.c|src/stm32f0-hal/stm32f0xx_hal_wwdg.c|src/stm32f0-hal/stm32f0xx_hal_usart_ex.c|src/stm32f0-hal/stm32f0xx_hal_usart.c|src/stm32f0-hal/stm32f0xx_hal_uart_ex.c|src/stm32f0-hal/stm32f0xx_hal_uart.c|src/stm32f0-hal/stm32f0xx_hal_tim_ex.c|src/stm32f0-hal/stm32f0xx_hal_tim.c|src/stm32f0-hal/stm32f0xx_hal_spi_ex.c|src/stm32f0-hal/stm32f0xx_hal_smbus.c|src/stm32f0-hal/stm32f0xx_hal_smartcard_ex.c|src/stm32f0-hal/stm32f0xx_hal_smartcard.c|src/stm32f0-hal/stm32f0xx_hal_rtc_ex.c|src/stm32f0-hal/stm32f0xx_hal_rtc.c|src/stm32f0-hal/stm32f0xx_hal_rcc_ex.c|src/stm32f0-hal/stm32f0xx_hal_pwr_ex.c|src/stm32f0-hal/stm32f0xx_hal_pcd_ex.c|src/stm32f0-hal/stm32f0xx_hal_pcd.c|src/stm32f0-hal/stm32f0xx_hal_irda.c|src/stm32f0-hal/stm32f0xx_hal_i2s.c|src/stm32f0-hal/stm32f0xx_hal_i2c_ex.c|src/stm32f0-hal/stm32f0xx_hal_i2c.c|src/stm32f0-hal/stm32f0xx_hal_exti.c|src/stm32f0-hal/stm32f0xx_hal_dma.c|src/stm32f0-hal/stm32f0xx_hal_dac_ex.c|src/stm32f0-hal/stm32f0xx_hal_dac.c|src/stm32f0-hal/stm32f0xx_hal_crc_ex.c|src/stm32f0-hal/stm32f0xx_hal_crc.c|src/stm32f0-hal/stm32f0xx_hal_comp.c|src/stm32f0-hal/stm32f0xx_hal_cec.c|src/stm32f0-hal/stm32f0xx_hal_can.c|src/stm32f0-hal/stm32f0xx_hal_adc_ex.c|src/stm32f0-hal/stm32f0xx_hal_adc.c|src/stm32f0-hal/stm32f0xx_hal_timebase_tim_template.c|src/stm32f0-hal/stm32f0xx_hal_timebase_rtc_wakeup_template.c|src/stm32f0-hal/stm32f0xx_hal_timebase_rtc_alarm_template.c|src/stm32f0-hal/stm32f0xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="system"/>
 					</sourceEntries>
 				</configuration>
@@ -419,6 +422,13 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/LED display"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/LED display"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>

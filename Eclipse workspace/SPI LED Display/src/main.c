@@ -248,8 +248,10 @@ main(int argc, char* argv[])
 	gpio_Init();
 	spi_Init();
 	led_Startup_Config();
+	while(1){
 	refresh_OLED();
-
+	Freq=Freq+1;
+	}
 }
 
 
@@ -259,7 +261,7 @@ main(int argc, char* argv[])
 
 void gpio_Init(void){
 	//Enable clock. RCC->A...
-	RCC->AHBENR |= CC_AHBENR_GPIOBEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 	//Set port pin mode. GPIO->MODER
 	GPIOB->MODER |= (GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0 | GPIO_MODER_MODER11_0 | 0x2UL << GPIO_MODER_MODER13_Pos | 0x2UL << GPIO_MODER_MODER15_Pos );
 	//Set AF0 for PB13 and 15. AFH[1]->
@@ -301,7 +303,7 @@ void led_Startup_Config(void){
 	//Run a 40k for loop iteration or implement a 10ms timer
     for(int i = 0; i < 40000; i++){}
 	//Drive PB11 high GPIOB->IDR11 = 1
-    GPIOB->ODR |= 1 << GPIO_ODR_11;
+    GPIOB->ODR = GPIO_ODR_11;
 	//Run a 40k for loop iteration or implement a 10ms timer
      for(int i = 0; i < 40000; i++){}
 	//Send initialization commands to LED Display
@@ -310,14 +312,18 @@ void led_Startup_Config(void){
         oled_Write_Cmd( oled_init_cmds[i] );
     }
     //Change d/c# to 1 for data (PB9)
-    GPIOB->BSRR |= 1 << GPIO_BSRR_BS_9;
+    GPIOB->BSRR = GPIO_BSRR_BS_9;
 	//Fill LED Display data memory (GDDRAM) with zeros:
    /* - for each PAGE = 0, 1, ..., 7
         set starting SEG = 0
         call oled_Write_Data( 0x00 ) 128 times
     */
+
    for(unsigned int PAGE = 0; PAGE <= 7; PAGE++){
-        for(unsigned int SEG = 0; SEG <= 7; SEG++){
+	   oled_Write_Cmd(0xB0+PAGE);
+	   oled_Write_Cmd(0x00);
+	   oled_Write_Cmd(0x10);
+        for(unsigned int SEG = 0; SEG <= 127; SEG++){
             oled_Write_Data(0x00);
         }
    }
@@ -393,34 +399,37 @@ void refresh_OLED( void )
 
 
     // Buffer size = at most 16 characters per PAGE + terminating '\0'
-    unsigned char Buffer[17];
-    snprintf( Buffer, sizeof( Buffer ), "Hello World!" );
+    char Buffer[17];
     //snprintf( Buffer, sizeof( Buffer ), "R: %5u Ohms", Res );
     /* Buffer now contains your character ASCII codes for LED Display
        - select PAGE (LED Display line) and set starting SEG (column)
        - for each c = ASCII code = Buffer[0], Buffer[1], ...,
            send 8 bytes in Characters[c][0-7] to LED Display
     */
-    for(int PAGE = 0; PAGE <= 7; PAGE++){
-        for( int SEG = 0; SEG <= 7; SEG++){
-            oled_Write_Data( Characters [Buffer[PAGE]] [SEG]);
-        }
-    }
+    //Select page
 
 
-    //snprintf( Buffer, sizeof( Buffer ), "F: %5u Hz", Freq );
+
+    snprintf( Buffer, sizeof( Buffer ), "F: %5u Hz", Freq );
     /* Buffer now contains your character ASCII codes for LED Display
        - select PAGE (LED Display line) and set starting SEG (column)
        - for each c = ASCII code = Buffer[0], Buffer[1], ...,
            send 8 bytes in Characters[c][0-7] to LED Display
     */
-
+    oled_Write_Cmd(0xB2);
+	oled_Write_Cmd(0x03);
+	oled_Write_Cmd(0x10);
+        for(int i = 0; (Buffer[i] != '\0'); i++){
+            for( int j = 0; j <= 7; j++){
+                oled_Write_Data( Characters [Buffer[i]] [j]);
+            }
+        }
 
 
 	/* Wait for ~100 ms (for example) to get ~10 frames/sec refresh rate
        - You should use TIM3 to implement this delay (e.g., via polling)
     */
-   for(int i = 0; i < 100000; i++){}
+   for(int i = 0; i < 100; i++){}
 
 
 }
