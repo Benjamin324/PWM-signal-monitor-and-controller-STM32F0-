@@ -52,7 +52,8 @@
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
-#define pot_max_res 0.0f // determine the maximum potentiometer resistance value
+#define POT_MAX_RES 680.0f // measured with a multimeter, 680ohms across pot pins, about 1.6kohms when pot set to middle of the turning wheel?
+#define POT_MAX_VOL 3.321f // measured with a multimeter, 3.321V across pot pins. Lower limit is 0V
 
 void ADC_Init() {
 	//enable clock for GPIOA peripheral
@@ -107,16 +108,18 @@ main(int argc, char* argv[])
     {
       //read adc potentiometer voltage through polling
 	  ADC_value = ADC_Read();
-
 	  //calculate digital value of pot voltage from ADC read
-	  pot_voltage = ((float)ADC_value / 4095f) * 3.3;
+	  pot_voltage = ((float)ADC_value / 4095.0f) * POT_MAX_VOL;
 
 	  //calculate digital value of pot resistance from ADC read
-	  pot_resistance = ((float)ADC_value / 4095f) * pot_max_res;
-	  fprintf("ADC Voltage: %f\nADC Resistance: %f\n", pot_voltage, pot_resistance); // for testing
+	  pot_resistance = ((float)ADC_value / 4095.0f) * POT_MAX_RES;
+
+	  // for testing
+	  trace_printf("ADC Voltage: %f V, ", pot_voltage);
+	  trace_printf("ADC Resistance: %f Ohms\n", pot_resistance);
 
 	  //write DAC value to PA4 output
-	  //DAC_Write(ADC_value);
+	  DAC_Write(ADC_value); // oscilloscope reads from PA4 a max output of 2.95V
     }
 }
 
